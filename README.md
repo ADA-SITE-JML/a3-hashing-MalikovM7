@@ -1,1 +1,1 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/4SJ6njmv)
+24 March: It is my first log, here I want to explain where I will write my code and what hashing technique I will use. I will write a console app on C# .NET 6.0, and will use SHA256 hashing function which is built in.
