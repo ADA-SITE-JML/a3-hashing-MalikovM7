@@ -35,3 +35,24 @@ class Program
         };
 
         //If you are using mac , press control+c
+
+        
+
+
+        
+    }
+
+    //Main Hashing function (separate method from main)
+
+    static int GetHashBucketIndex(string input, int bucketCount)
+    {
+        using (SHA256 sha256 = SHA256.Create())
+        {
+            byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
+            int hashInt = BitConverter.ToInt32(hashBytes, 0);
+            return (Math.Abs(hashInt) % bucketCount) + 1;
+        }
+    }
+
+
+    }
