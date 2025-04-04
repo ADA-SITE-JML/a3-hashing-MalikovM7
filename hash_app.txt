@@ -53,5 +53,32 @@ class Program
         }
     }
 
+  static string GetNextOverflowFileName(string filePath)
+    {
+        //this method is for creation next available overflow file
+        //if we are in 3_1 overflow it will add to 3_2 overflow
+        
+        string baseName = Path.GetFileNameWithoutExtension(filePath);
+        //first we need to know the bucket file without .txt extenstion and this part separates it
+        
+     
+        
+        string extension = Path.GetExtension(filePath);
+        //reverse process , getting that .txt extension, so later we can append it to file
+        if (!baseName.Contains("_overflow"))
+        {
+            return $"{baseName}_overflow1{extension}";
+        }
+        
+        //checks if the bucket with strings is with overflow extension or not, if it is not it adds overflow for the first time
+
+        int lastIndex = int.Parse(baseName.Substring(baseName.LastIndexOf("overflow") + 8));
+        //finds which overflow file is it 3_overflow2 , it extracts 2 
+        string baseBucket = baseName.Substring(0, baseName.IndexOf("_overflow"));
+        //this line extracts the original bucket number, we use IndexOf function for that
+        return $"{baseBucket}_overflow{lastIndex + 1}{extension}";
+        //returns next overflow filename, extracted last overflow index+1 
+    }
+
 
     }
