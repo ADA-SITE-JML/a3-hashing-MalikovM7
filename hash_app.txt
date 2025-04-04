@@ -5,36 +5,32 @@ using System.Security.Cryptography;
 
 class Program
 {
-    static int n; 
-    static int s;
+    static int n; // number of buckets
+    static int s; // max character count per file 
 
     static void Main()
     {
-        // using validation techniques, I asked the user to write a proper number of buckets n and the size of records s in it 
-        while (true)
+        foreach (var file in Directory.GetFiles(Directory.GetCurrentDirectory(), "*.txt"))
         {
-            Console.Write("Enter number of buckets (n): ");
-            if (int.TryParse(Console.ReadLine(), out n) && n > 0) break;
-            Console.WriteLine("Please enter a valid positive number for n.");
-        }
-
-        while (true)
+            File.Delete(file);
+        } //I added this loop to delete all existing .txt files in the memory before each run
+        
+        if (args.Length != 2 || !int.TryParse(args[0], out n) || !int.TryParse(args[1], out s))
         {
-            Console.Write("Enter max number of strings per bucket file (s): ");
-            if (int.TryParse(Console.ReadLine(), out s) && s > 0) break;
-            Console.WriteLine("Please enter a valid positive number for s.");
-        }
+            Console.WriteLine("Usage: hash_app <number_of_buckets> <max_characters_per_file>");
+            return;
+        } //You asked to run the program with console arguments that is why I changed the part when I first was asking from user n and s values and added them directly 
+        //from run configurations.
 
-        Console.WriteLine("\nStart typing strings. Press Ctrl+C to exit.\n");
+        Console.WriteLine($"hash_app started with {n} buckets, max {s} characters per file.");
+        //Just for visualisation
 
         Console.CancelKeyPress += (sender, e) =>
         {
             Console.WriteLine("\nExiting...");
             e.Cancel = true;
             Environment.Exit(0);
-        };
-
-        //If you are using mac , press control+c
+        }; //This part for exiting, pressing on Ctrl+c on windows or control+c on mac
 
         
 
@@ -44,13 +40,16 @@ class Program
 
     //Main Hashing function (separate method from main)
 
-    static int GetHashBucketIndex(string input, int bucketCount)
+    static int HashFunction(string input)
     {
         using (SHA256 sha256 = SHA256.Create())
         {
-            byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
-            int hashInt = BitConverter.ToInt32(hashBytes, 0);
-            return (Math.Abs(hashInt) % bucketCount) + 1;
+            byte[] hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
+            //in this line it converts the input string to bytes, and using sha256.ComputeHash it hashes the byte array.
+            int result = BitConverter.ToInt32(hash, 0);
+            //in this line it takes first 4 bytes and converts them to integers, it is needed because we need the number not the full hashcode.
+            return Math.Abs(result);
+            //this line makes us sure that the result is non negative and fits into the range of buckets from 1 to n.
         }
     }
 
