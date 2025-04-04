@@ -1,0 +1,158 @@
+﻿using System;
+using System.IO;
+using System.Security.Cryptography;
+using System.Text;
+
+class Program
+{
+    static int n; // number of buckets
+    static int s; // max character count per file 
+
+    static void Main(string[] args)
+    {
+        foreach (var file in Directory.GetFiles(Directory.GetCurrentDirectory(), "*.txt"))
+        {
+            File.Delete(file);
+        } //I added this loop to delete all existing .txt files in the memory before each run
+        
+        if (args.Length != 2 || !int.TryParse(args[0], out n) || !int.TryParse(args[1], out s))
+        {
+            Console.WriteLine("Usage: hash_app <number_of_buckets> <max_characters_per_file>");
+            return;
+        } //You asked to run the program with console arguments that is why I changed the part when I first was asking from user n and s values and added them directly 
+        //from run configurations.
+
+        Console.WriteLine($"hash_app started with {n} buckets, max {s} characters per file.");
+        //Just for visualisation
+
+        Console.CancelKeyPress += (sender, e) =>
+        {
+            Console.WriteLine("\nExiting...");
+            e.Cancel = true;
+            Environment.Exit(0);
+        }; //This part for exiting, pressing on Ctrl+c on windows or control+c on mac
+        
+        while (true)
+        {
+            Console.Write("Please enter the string: ");
+            string input = Console.ReadLine();
+            //user enters the string
+            int bucketIndex = HashFunction(input) % n + 1; 
+            //This calculates which bucket file this string should go into.
+            //%n keeps it within range 0 to n-1.
+            //+1 shifts the range to 1 to n, so file names go from 1.txt to n.txt.
+            
+            string baseFile = $"{bucketIndex}.txt";
+            //This is for creating bucket with files named n.txt 
+            string writtenTo = WriteToBucket(baseFile, input);
+            //calls writing into bucket method
+            Console.WriteLine($"{input} added to {Path.GetFileName(writtenTo)}");
+            //just for visual confirmation for the user that the string is written into the bucket
+        }
+    }
+
+    static int HashFunction(string input)
+    {
+        using (SHA256 sha256 = SHA256.Create())
+        {
+            byte[] hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
+            //in this line it converts the input string to bytes, and using sha256.ComputeHash it hashes the byte array.
+            int result = BitConverter.ToInt32(hash, 0);
+            //in this line it takes first 4 bytes and converts them to integers, it is needed because we need the number not the full hashcode.
+            return Math.Abs(result);
+            //this line makes us sure that the result of hashing is non-negative and fits into the range of buckets from 1 to n.
+        }
+    }
+
+    static string WriteToBucket(string filePath, string input)
+    {
+        while (true)
+        {
+            // If file does not exist, write the input directly and return
+            if (!File.Exists(filePath))
+            {
+                File.WriteAllText(filePath, input);
+                return filePath;
+            }
+
+            string[] lines = File.ReadAllLines(filePath);
+            // it reads all lines and store them into an array
+           
+            string nextFile = null;
+
+            string content = "";
+            
+            foreach (var line in lines)
+            {
+                if (line.StartsWith("NEXT:"))
+                {
+                    nextFile = line.Substring(5).Trim();
+                }
+                else
+                {
+                    content += line;
+                }
+            }
+
+            bool iscomma = !string.IsNullOrWhiteSpace(content);
+            //to determine if there is a comma after the string
+            int newLength = content.Length + input.Length + (iscomma ? 1 : 0);
+            
+            if (newLength <= s)
+            {
+                if (iscomma)
+                    File.AppendAllText(filePath, "," + input);
+                else
+                    File.AppendAllText(filePath, input);
+                return filePath;
+            }
+            //checks if the length of the bucket does not exceed s
+            //in this case commas are also counted as characters
+            
+            //ELSE
+            // Handle overflow
+            if (nextFile == null)
+            {
+                nextFile = GetNextOverflowFileName(filePath);
+                File.AppendAllText(filePath, Environment.NewLine + $"NEXT:{nextFile}");
+            }
+            
+            //The part which is above determines if the length of strings with comma extends the bucket size or not
+            //if no, write directly, if yes write into overflow 
+
+            filePath = nextFile;
+        }
+    }
+
+    static string GetNextOverflowFileName(string filePath)
+    {
+        //this method is for creation next available overflow file
+        //if we are in 3_1 overflow it will add to 3_2 overflow
+        
+        string baseName = Path.GetFileNameWithoutExtension(filePath);
+        //first we need to know the basename of the bucket file without .txt extenstion and this part separates it
+
+        string extension = Path.GetExtension(filePath);
+        //reverse process , getting that .txt extension, so later we can append it to file
+        if (!baseName.Contains("_overflow"))
+        {
+            return $"{baseName}_overflow1{extension}";
+        }
+        
+        //checks if the bucket with strings is with overflow extension or not, if it is not it adds overflow for the first time
+
+        int lastIndex = int.Parse(baseName.Substring(baseName.LastIndexOf("overflow") + 8));
+        //finds which overflow file is it 3_overflow2 , it extracts 2 
+        string baseBucket = baseName.Substring(0, baseName.IndexOf("_overflow"));
+        //this line extracts the original bucket number, we use IndexOf function for that
+        return $"{baseBucket}_overflow{lastIndex + 1}{extension}";
+        //returns next overflow filename, extracted last overflow index+1 
+    }
+}
+
+//How it works?
+// For example:
+// n = 5
+// You enter Hello
+// Hash of Hello  (some value) % 5 + 1 = 3 , it stores in 3.txt
+// for example 3.txt exists, and it is under size 20, then we can write into it,  when it is more than 20 characters it creates overflow1 extension, and everytime the index of overflow increases.
