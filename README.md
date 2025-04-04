@@ -5,5 +5,5 @@
 2 April: wrote main hash function method which computes a hash of the input string using SHA256 algorithm.
 
 4th april: I have seen your comments in discussions, You asked to run the program with console arguments that is why I changed the part when I first was asking from user n and s values and added them directly from run configurations.
-also I wrote a method for writing into the buckets , where I considered that comma ',' is dividing the strings
+also I wrote a method for creating next overflow file and writing into the bucket , where I considered that comma ',' is dividing the strings
 
