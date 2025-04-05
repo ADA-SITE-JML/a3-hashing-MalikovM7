@@ -13,7 +13,7 @@ class Program
         foreach (var file in Directory.GetFiles(Directory.GetCurrentDirectory(), "*.txt"))
         {
             File.Delete(file);
-        } //I added this loop to delete all existing .txt files in the memory before each run
+        } //I added this loop to delete all existing .txt files in the current directory before each run, which will ensure clean start
         
         if (args.Length != 2 || !int.TryParse(args[0], out n) || !int.TryParse(args[1], out s))
         {
